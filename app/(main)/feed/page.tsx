@@ -1,12 +1,32 @@
 "use client";
 
-import { useState } from 'react';
-import { mockPosts, mockTrending } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
+import { mockTrending } from '@/lib/mock-data';
 import { PostCard } from '@/features/feed/components/PostCard';
+import { PostCreator } from '@/features/posts/components';
 import { Settings, Sparkles } from 'lucide-react';
+import { Post } from '@/types';
+import { useAuthStore, usePostsStore } from '@/store';
 
 export default function FeedPage() {
   const [activeTab, setActiveTab] = useState<'for-you' | 'following'>('for-you');
+  
+  // Use Zustand stores
+  const { user: currentUser } = useAuthStore();
+  const { posts, addPost, filter, setFilter } = usePostsStore();
+
+  useEffect(() => {
+    setFilter(activeTab);
+  }, [activeTab, setFilter]);
+
+  const handlePostCreate = (newPost: Omit<Post, 'id' | 'timestamp'>) => {
+    const post: Post = {
+      ...newPost,
+      id: Date.now().toString(),
+      timestamp: new Date(),
+    };
+    addPost(post);
+  };
 
   return (
     <div className="flex-1 min-h-screen">
@@ -54,48 +74,19 @@ export default function FeedPage() {
           </div>
         </div>
 
-        {/* Post composer placeholder */}
-        <div className="border-b border-gray-200 p-4">
-          <div className="flex gap-3">
-            <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=current-user"
-              alt="Your avatar"
-              className="w-12 h-12 rounded-full"
-            />
-            <div className="flex-1">
-              <button className="w-full text-left text-gray-500 text-xl p-3 hover:bg-gray-50 rounded-xl transition-colors">
-                What's happening?
-              </button>
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center gap-4 text-saffron-500">
-                  <button className="hover:bg-saffron-50 p-2 rounded-full transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                  <button className="hover:bg-saffron-50 p-2 rounded-full transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011 1v2a1 1 0 01-1 1h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V8H3a1 1 0 01-1-1V5a1 1 0 011-1h4z" />
-                    </svg>
-                  </button>
-                  <button className="hover:bg-saffron-50 p-2 rounded-full transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </button>
-                </div>
-                <button className="bg-saffron-500 hover:bg-saffron-600 text-white font-medium py-2 px-6 rounded-full transition-colors">
-                  Post
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Post Creator */}
+        {currentUser && (
+          <PostCreator
+            onPostCreate={handlePostCreate}
+            currentUser={currentUser}
+            placeholder="What's happening?"
+          />
+        )}
 
         {/* Feed */}
         <div className="pb-20 lg:pb-0">
           {activeTab === 'for-you' ? (
-            mockPosts.map((post) => (
+            posts.map((post) => (
               <PostCard key={post.id} post={post} />
             ))
           ) : (
@@ -136,7 +127,7 @@ export default function FeedPage() {
           <div className="bg-gray-50 rounded-2xl p-4">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Who to follow</h2>
             <div className="space-y-3">
-              {mockPosts.slice(0, 3).map((post) => (
+              {posts.slice(0, 3).map((post) => (
                 <div key={post.author.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <img

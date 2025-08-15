@@ -1,29 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useAuthStore } from "@/store";
 
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const { login, isLoading, error, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    // Redirect if already authenticated
+    if (isAuthenticated) {
+      router.push('/feed');
+    }
+  }, [isAuthenticated, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    // Simulate login delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await login(username, password);
     
-    // Store username in localStorage for demo
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('username', username);
-    }
-    
-    // Redirect to feed
-    router.push('/feed');
+    // The redirect will happen via the useEffect when isAuthenticated becomes true
   };
 
   return (
@@ -44,6 +45,11 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">

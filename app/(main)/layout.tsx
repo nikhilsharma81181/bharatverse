@@ -1,18 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, Search, Bell, Mail, Bookmark, User, MoreHorizontal, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-const navigation = [
-  { name: 'Home', href: '/feed', icon: Home },
-  { name: 'Explore', href: '/explore', icon: Search },
-  { name: 'Notifications', href: '/notifications', icon: Bell },
-  { name: 'Messages', href: '/messages', icon: Mail },
-  { name: 'Bookmarks', href: '/bookmarks', icon: Bookmark },
-  { name: 'Profile', href: '/profile', icon: User },
-];
+import { mockUsers } from '@/lib/mock-data';
 
 export default function MainLayout({
   children,
@@ -21,6 +13,28 @@ export default function MainLayout({
 }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername) {
+        const user = mockUsers.find(u => u.username === storedUsername) || mockUsers[0];
+        setCurrentUser(user);
+      } else {
+        setCurrentUser(mockUsers[0]);
+      }
+    }
+  }, []);
+
+  const navigation = [
+    { name: 'Home', href: '/feed', icon: Home },
+    { name: 'Explore', href: '/explore', icon: Search },
+    { name: 'Notifications', href: '/notifications', icon: Bell },
+    { name: 'Messages', href: '/messages', icon: Mail },
+    { name: 'Bookmarks', href: '/bookmarks', icon: Bookmark },
+    { name: 'Profile', href: `/profile/${currentUser?.username || 'rajesh_kumar'}`, icon: User },
+  ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -74,24 +88,24 @@ export default function MainLayout({
 
             {/* User Profile */}
             <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
-              <div className="flex items-center w-full group">
+              <Link href={`/profile/${currentUser?.username || 'rajesh_kumar'}`} className="flex items-center w-full group">
                 <div>
                   <img
                     className="inline-block h-10 w-10 rounded-full"
-                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=current-user"
+                    src={currentUser?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=current-user"}
                     alt="Your avatar"
                   />
                 </div>
                 <div className="ml-3 flex-1">
                   <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                    Current User
+                    {currentUser?.name || 'Current User'}
                   </p>
                   <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
-                    @currentuser
+                    @{currentUser?.username || 'currentuser'}
                   </p>
                 </div>
                 <MoreHorizontal className="h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-              </div>
+              </Link>
             </div>
           </div>
         </div>
